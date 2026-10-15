@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gemini-worker": {
+      "command": ".venv/bin/python",
+      "args": ["scripts/gemini_cli_mcp.py"]
+    }
+  }
+}

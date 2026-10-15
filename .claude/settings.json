@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__gemini-worker__delegate_to_gemini"
+    ]
+  }
+}

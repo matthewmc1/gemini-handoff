@@ -1,0 +1,26 @@
+## Sub-Agent Orchestration: Gemini CLI (`gemini-3.8-flash`)
+
+You have access to the read-only `mcp__gemini-worker__delegate_to_gemini` tool, which invokes the enterprise Gemini CLI (`gemini-3.8-flash`, 1M token context window).
+
+**CRITICAL TOKEN RULE:** Before calling `delegate_to_gemini`, **DO NOT** use `Read` on the target files or directories yourself. Pass file or directory paths in `target_paths` so Gemini reads them from disk out-of-band. Keep all file editing and test writing in your own native tools.
+
+`shell_context_cmd` accepts only read-only `git` (diff, status, log, show, ls-files, blame, ...), `cat`, `ls`, `grep`, and `fzf --filter=QUERY`, chained with `&&` or `|` (e.g. `git ls-files | fzf --filter=auth`). No redirects or globs; paths must stay inside the project.
+
+### Mandatory Handoff Triggers
+
+1. **Synthesizing complex tasks (`task_type="synthesize"`)**
+   - **When:** Starting a task that spans >3 files, tracing unfamiliar architecture, or mapping impact across modules before coding.
+   - **How:** Pass target directories in `target_paths` (e.g. `["src/", "prisma/"]`). Ask for an architectural map, dependency order, and exact `filepath:line` targets.
+   - **Next:** Open only the exact files that need edits.
+
+2. **Code reviews (`task_type="review"`)**
+   - **When:** Before finalizing a task, preparing a PR, or when asked to review changes.
+   - **How:** Set `shell_context_cmd="git diff"` (or `"git diff main...HEAD"`) and pass modified module directories in `target_paths`. Ask for regressions, security flaws, type mismatches, and edge cases.
+   - **Next:** Apply `CRITICAL` and `WARNING` findings with your native `Edit` tool.
+
+3. **Post-implementation verification (`task_type="verify"`)**
+   - **When:** After completing a multi-file refactor or feature implementation.
+   - **How:** Put the original requirements in `instructions`, set `shell_context_cmd="git status --short && git diff"`, and pass affected directories in `target_paths`. Ask for 100% requirement coverage and broken imports / unhandled call sites.
+   - **Next:** Resolve any gaps before reporting completion to the user.
+
+If the result says output was saved to `.gemini_last_handoff.md`, use Grep or Read with offsets on that file rather than re-running the handoff.
